@@ -1,0 +1,44 @@
+---
+- name: Upload Zookeeper distribution (tar.gz) from localhost
+  copy:
+    src: ../../../rpms/apache-zookeeper-3.6.2-bin.tar.gz
+    dest: "{{ zk_base_dir }}"
+
+- name: Unarchive Zookeeper distribution
+  unarchive:
+    src: "{{ zk_base_dir }}/apache-zookeeper-3.6.2-bin.tar.gz"
+    dest: "{{ zk_base_dir }}"
+    copy: no
+
+- name: Recursively giving 777 permission to extracted folder
+  ansible.builtin.file:
+    path: "{{ zk_base_dir }}/{{ zk_extracted_dir }}"
+    state: directory
+    mode: '0777'
+    recurse: yes
+
+- name: Creating data directory
+  file:
+    path: "{{ zk_base_dir }}/data/zookeeper"
+    state: directory
+
+- name: Writing myid file inside data directory
+  copy:
+    content: "{{ myid }}"
+    dest: "{{ zk_base_dir }}/data/zookeeper/myid"
+
+- name: Renaming zoo_sample.cfg to zoo.cfg
+  command: "cp {{ zk_base_dir }}/{{ zk_extracted_dir }}/conf/zoo_sample.cfg {{ zk_base_dir }}/{{ zk_extracted_dir }}/conf/zoo.cfg"
+
+- name: Changing zoo.cfg file to add server names
+  ansible.builtin.template:
+    src: ../templates/zoo.cfg.j2
+    dest: "{{ zk_base_dir }}/{{ zk_extracted_dir }}/conf/zoo.cfg"
+
+- name: Changing ownership of all files recursively to hadoop
+  ansible.builtin.file:
+    path: "{{ zk_base_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ zk_user }}"
+    group: "{{ zk_user }}"

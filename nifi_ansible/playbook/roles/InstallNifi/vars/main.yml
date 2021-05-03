@@ -1,0 +1,35 @@
+---
+zk_base_dir: /opt/installations/zookeeper
+nifi_base_dir: /opt/installations/nifi
+nifi_extracted_dir: nifi-1.13.0
+nifi_user: hadoop
+java_home_path: /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.282.b08-1.el7_9.x86_64
+host_name: "{{ ansible_ens192.ipv4.address }}"
+
+#nifi_servers: [10.174.134.100, 10.174.134.66, 10.174.134.232]
+
+# Site to Site properties
+input_socket_port: 9998
+
+# cluster common properties (all nodes must have same values) #
+protocol_heartbeat_interval: 15 sec
+
+# cluster node properties (only configure for cluster nodes) #
+is_node: "{{ 'true' }}"
+node_protocol_port: 9999
+node_protocol_threads: 40
+node_protocol_max_threads: 80
+node_connection_timeout: 60 sec
+node_read_timeout: 60 sec
+flow_election_max_candidates: "{% if hostvars[ansible_default_ipv4.address].groups['NifiServers'] | length > 0 -%}{{ hostvars[ansible_default_ipv4.address].groups['NifiServers'] | length }}{% else -%}''{% endif -%}"
+#flow_election_max_candidates: 3
+
+# zookeeper properties, used for cluster management #
+zookeeper_connect_string: "{% if hostvars[ansible_default_ipv4.address].groups['NifiServers'] | length > 0 -%}{{ hostvars[ansible_default_ipv4.address].groups['NifiServers'] | join(':2181,') }}:2181{% else -%}''{% endif -%}"
+zookeeper_connect_timeout: 60 secs
+zookeeper_session_timeout: 60 secs
+zookeeper_root_node: /opt/installations/zookeeper/data/nifi
+
+# analytics properties #
+analytics_predict_enable: "{{ 'true' }}"
+analytics_predict_interval: 30 mins

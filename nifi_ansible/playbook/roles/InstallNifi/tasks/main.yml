@@ -1,0 +1,55 @@
+---
+- name: Upload Nifi distribution (tar.gz) from localhost
+  copy:
+    src: ../../../rpms/nifi-1.13.0-bin.tar.gz
+    dest: "{{ nifi_base_dir }}"
+
+- name: Unarchive Nifi distribution
+  unarchive:
+    src: "{{ nifi_base_dir }}/nifi-1.13.0-bin.tar.gz"
+    dest: "{{ nifi_base_dir }}"
+    copy: no
+
+- name: Recursively giving 777 permission to extracted folder
+  ansible.builtin.file:
+    path: "{{ nifi_base_dir }}/{{ nifi_extracted_dir }}"
+    state: directory
+    mode: '0777'
+    recurse: yes
+
+- name: Changing nifi-env.sh file to add JAVA_HOME
+  ansible.builtin.replace:    
+    path: "{{ nifi_base_dir }}/{{ nifi_extracted_dir }}/bin/nifi-env.sh"
+    regexp: '#export JAVA_HOME=/usr/java/jdk1.8.0/'
+    replace: 'export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.282.b08-1.el7_9.x86_64'
+
+- name: Changing nifi.properties file to add hostname
+  ansible.builtin.template:
+    src: ../templates/nifi.properties.j2
+    dest: "{{ nifi_base_dir }}/{{ nifi_extracted_dir }}/conf/nifi.properties"
+
+- name: Changing state-management.xml file to add zk connect string
+  ansible.builtin.template:
+    src: ../templates/state-management.xml.j2
+    dest: "{{ nifi_base_dir }}/{{ nifi_extracted_dir }}/conf/state-management.xml"
+
+- name: Creating data directory
+  file:
+    path: "{{ zk_base_dir }}/data/nifi"
+    state: directory
+
+- name: Changing ownership of data/nifi directory to hadoop
+  ansible.builtin.file:
+    path: "{{ zk_base_dir }}/data/nifi"
+    state: directory
+    recurse: yes
+    owner: "{{ nifi_user }}"
+    group: "{{ nifi_user }}"
+
+- name: Changing ownership of all files recursively to hadoop
+  ansible.builtin.file:
+    path: "{{ nifi_base_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ nifi_user }}"
+    group: "{{ nifi_user }}"

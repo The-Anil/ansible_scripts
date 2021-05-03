@@ -1,0 +1,6 @@
+---
+admin_server_port: admin.serverPort=9876
+myid: "{% if ansible_ens192.ipv4.address == '10.174.134.100' %}1{% elif ansible_ens192.ipv4.address == '10.174.134.66' %}2{% elif ansible_ens192.ipv4.address == '10.174.134.232' %}3{% endif %}"
+zk_base_dir: /opt/installations/zookeeper/
+zk_extracted_dir: apache-zookeeper-3.6.2-bin/
+zk_user: hadoop
